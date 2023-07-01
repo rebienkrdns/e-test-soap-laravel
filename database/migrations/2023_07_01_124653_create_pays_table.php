@@ -11,7 +11,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('pays', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->id();
             $table->foreignId('userId')->constrained('users', 'id', 'pays_userid_foreign');
             $table->mediumInteger('token');
             $table->double('valor');

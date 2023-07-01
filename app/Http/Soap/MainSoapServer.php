@@ -7,10 +7,10 @@ use App\Models\Pay;
 use App\Models\User;
 use App\Models\Wallet;
 use Exception;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 
 class MainSoapServer
 {
@@ -187,16 +187,14 @@ class MainSoapServer
         }
 
         $token = fake()->numberBetween(111111, 999999);
-        $id = Str::uuid();
 
         $data = Pay::create([
-            'id' => $id,
             'userId' => $user->id,
             'token' => $token,
             'valor' => $valor
         ]);
 
-        Mail::to($user->correo)->send(new ConfirmPay($id, $data->token));
+        Mail::to($user->correo)->send(new ConfirmPay($data->id, $data->token));
 
         $success = true;
 
@@ -208,6 +206,58 @@ class MainSoapServer
                 'cliente' => $user->only('id', 'documento', 'nombres', 'correo', 'celular'),
                 'pago' => $data->only('id', 'valor'),
                 'feedback' => 'Se ha enviado un correo más el id de sesión que debe ser usado en la confirmación de la compra'
+            ]
+        ];
+    }
+
+    /**
+     * Confirmar Pago
+     *
+     * @param int $id Identificador de sesión
+     * @param int $token Código de confirmación
+     *
+     * @return array
+     */
+    public function confirmarPago(int $id, int $token): array
+    {
+        $success = false;
+        $data = [];
+        $cod_error = '00';
+        $message_error = '';
+
+        $validator = Validator::make(['id' => $id, 'token' => $token], [
+            'id' => 'required|filled|max:36|exists:pays,id',
+            'token' => 'required|max:6'
+        ]);
+
+        $pay = Pay::find($id)->where('token', $token);
+
+        if ($validator->fails() || !$pay->exists()) {
+            return [
+                'success' => $success,
+                'cod_error' => '400',
+                'message_error' => 'El id de sesión o el token es requerido o no concuerda con los registros',
+                'data' => $data
+            ];
+        }
+
+        $pay = $pay->first();
+        Wallet::create([
+            'userId' => $pay->userId,
+            'valor' => $pay->valor * -1
+        ]);
+        $user = User::find($pay->userId);
+        $success = true;
+
+        $balance = Wallet::select(DB::raw('SUM(valor) as balance'))->where('userId', $pay->userId)->first()->balance ?? 0;
+
+        return [
+            'success' => $success,
+            'cod_error' => $cod_error,
+            'message_error' => $message_error,
+            'data' => [
+                'cliente' => $user->only('id', 'documento', 'nombres', 'correo', 'celular'),
+                'balance_billetera' => $balance
             ]
         ];
     }

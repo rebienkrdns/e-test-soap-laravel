@@ -1,7 +1,5 @@
 <?php
 
-namespace Tests\Feature;
-
 use App\Http\Soap\MainSoapServer;
 use Tests\TestCase;
 

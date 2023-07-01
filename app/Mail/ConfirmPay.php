@@ -35,7 +35,7 @@ class ConfirmPay extends Mailable
     public function content(): Content
     {
         return new Content(
-            'mail.pay.confirm'
+            'pays.mail.confirm'
         );
     }
 

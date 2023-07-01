@@ -350,9 +350,7 @@
     </style>
 </head>
 <body>
-<p>Hola hola, por seguridad, te hemos enviado este código de confirmación de 6 digitos <strong>{{ $token }}</strong>
-    para continuar con el pago por favor haga click en el enlace:
-    <a href="{{ url("pay/confirm/{$id}") }}" style="color: cornflowerblue">Confirmar pago</a></p> y proceda a
-ingresarlo
+<p>Hola hola, por seguridad, te hemos enviado el identificador de sesión de tu pago: <strong>{{ $id }}</strong>, y este
+    código de confirmación de 6 digitos <strong>{{ $token }}</strong> debes ingresarlo para poder confirmar el pago</p>
 </body>
 </html>
