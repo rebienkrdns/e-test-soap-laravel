@@ -261,4 +261,59 @@ class MainSoapServer
             ]
         ];
     }
+
+    /**
+     * Consultar Saldo
+     *
+     * @param string $documento Documento del cliente
+     * @param string $celular Celular del cliente
+     *
+     * @return array
+     */
+    public function consultarSaldo(string $documento, string $celular): array
+    {
+        $success = false;
+        $data = [];
+        $cod_error = '00';
+        $message_error = '';
+
+        $validator = Validator::make(['documento' => $documento, 'celular' => $celular], [
+            'documento' => 'required|filled|max:255',
+            'celular' => 'required|filled|max:255',
+        ]);
+
+        $user = User::where([
+            ['documento', $documento],
+            ['celular', $celular]
+        ])->first();
+
+        if ($validator->fails()) {
+            return [
+                'success' => $success,
+                'cod_error' => '400',
+                'message_error' => 'Todos los campos son requeridos',
+                'data' => $data
+            ];
+        } else if (is_null($user)) {
+            return [
+                'success' => $success,
+                'cod_error' => '400',
+                'message_error' => 'El cliente no está registrado',
+                'data' => $data
+            ];
+        }
+
+        $balance = Wallet::select(DB::raw('SUM(valor) as balance'))->where('userId', $user->id)->first()->balance ?? 0;
+        $success = true;
+
+        return [
+            'success' => $success,
+            'cod_error' => $cod_error,
+            'message_error' => $message_error,
+            'data' => [
+                'cliente' => $user->only('id', 'documento', 'nombres', 'correo', 'celular'),
+                'balance_billetera' => $balance
+            ]
+        ];
+    }
 }
